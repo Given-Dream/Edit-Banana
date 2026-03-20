@@ -3,237 +3,455 @@
 </p>
 
 <h1 align="center">🍌 Edit Banana</h1>
-<h3 align="center">Universal Content Re-Editor: Make the Uneditable, Editable</h3>
+<h3 align="center">将静态图像转换为可编辑 Draw.io 文件</h3>
 
 <p align="center">
-Break free from static formats. Our platform empowers you to transform fixed content into fully manipulatable assets.
-Powered by SAM 3 and multimodal large models, it enables high-fidelity reconstruction that preserves the original diagram details and logical relationships.
+面向本地使用场景的图像转 Draw.io 工具。<br/>
+基于 SAM3 分割与 OCR 流程，将流程图、结构图、示意图中的图形与文字拆分重建为可编辑的 Draw.io XML。
 </p>
 
 <p align="center">
-  <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-2F80ED?style=flat-square&logo=apache&logoColor=white" alt="License"/></a>
-  <a href="https://developer.nvidia.com/cuda-downloads"><img src="https://img.shields.io/badge/GPU-CUDA%20Recommended-76B900?style=flat-square&logo=nvidia" alt="CUDA"/></a>
-  <a href="https://github.com/BIT-DataLab/Edit-Banana/stargazers"><img src="https://img.shields.io/github/stars/BIT-DataLab/Edit-Banana?style=flat-square&logo=github" alt="GitHub stars"/></a>
+  <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"/>
+  <img src="https://img.shields.io/badge/License-Apache_2.0-2F80ED?style=flat-square&logo=apache&logoColor=white" alt="License"/>
+  <img src="https://img.shields.io/badge/GPU-CUDA%20Recommended-76B900?style=flat-square&logo=nvidia" alt="CUDA"/>
 </p>
 
 ---
 
-## 📸 Effect Demonstration
-### High-Definition Input-Output Comparison (3 Typical Scenarios)
-To demonstrate the high-fidelity conversion effect, we provides one-to-one comparisons between 3 scenarios of "original static formats" and "editable reconstruction results". All elements can be individually dragged, styled, and modified.
+## 项目说明
 
-#### Scenario 1: Figures to Drawio(xml, svg, pptx)
+这是基于原始 Edit-Banana 项目整理的本地可运行版本，重点做了以下调整：
 
-| Example No. | Original Static Diagram (Input · Non-editable) | DrawIO Reconstruction Result (Output · Fully Editable) |
-|--------------|-----------------------------------------------|--------------------------------------------------------|
-| Example 1: Basic Flowchart | <img src="/static/demo/original_1.jpg" width="400" alt="Original Diagram 1" style="border: 1px solid #eee; border-radius: 4px;"/> | <img src="/static/demo/recon_1.png" width="400" alt="Reconstruction Result 1" style="border: 1px solid #eee; border-radius: 4px;"/> |
-| Example 2: Multi-level Architecture Diagram | <img src="/static/demo/original_2.png" width="400" alt="Original Diagram 2" style="border: 1px solid #eee; border-radius: 4px;"/> | <img src="/static/demo/recon_2.png" width="400" alt="Reconstruction Result 2" style="border: 1px solid #eee; border-radius: 4px;"/> |
-| Example 3: Technical Schematic | <img src="/static/demo/original_3.jpg" width="400" alt="Original Diagram 3" style="border: 1px solid #eee; border-radius: 4px;"/> | <img src="/static/demo/recon_3.png" width="400" alt="Reconstruction Result 3" style="border: 1px solid #eee; border-radius: 4px;"/> |
-| Example 4: Scientific Formula Diagram | <img src="/static/demo/original_4.jpg" width="400" alt="Original Diagram 4" style="border: 1px solid #eee; border-radius: 4px;"/> | <img src="/static/demo/recon_4.png" width="400" alt="Reconstruction Result 4" style="border: 1px solid #eee; border-radius: 4px;"/> |
+- 适配本地单机运行
+- 补齐 SAM3 安装路径与配置说明
+- 改为轻量网页入口，不再依赖单独 `frontend` 工程
+- 一次上传，自动同时生成
+  - 带文字版本
+  - 不带文字版本
+  - 识别文字 TXT
+- 输出结果直接保存在 `output/` 目录中
 
-#### Scenario 2: PDF to PPTX
+---
 
+## 当前版本特性
 
-#### Scenario 3: Human in the Loop Modification
+### 1. 图像转 Draw.io
+上传一张流程图、结构图、示意图图片，输出可编辑的 `.drawio.xml` 文件。
 
-> ✨ Conversion Highlights:
-> 1.  Preserves the layout logic, color matching, and element hierarchy of the original diagram
-> 2.  1:1 restoration of shape stroke/fill and arrow styles (dashed lines/thickness)
-> 3.  Accurate text recognition, supporting direct subsequent editing and format adjustment
-> 4.  All elements are independently selectable, supporting native DrawIO template replacement and layout optimization
+### 2. 同时生成两套结果
+每次转换会在 `output/` 下生成一个结果文件夹，包含：
 
-## Key Features
+- 带文字版 Draw.io
+- 不带文字版 Draw.io
+- 识别文字 TXT
 
-*   **Advanced Segmentation**: Using our fine-tuned **SAM 3 (Segment Anything Model 3)** for segmentation of diagram elements.
-*   **Fixed Multi-Round VLM Scanning**: An extraction process guided by **Multimodal LLMs (Qwen-VL/GPT-4V)**.
-*   **High-Quality OCR**:
-    *   **Azure Document Intelligence** for precise text localization.
-    *   **Fallback Mechanism**: Automatically switches to VLM-based end-to-end OCR if Azure services are unreachable.
-    *   **Mistral Vision/MLLM** for correcting text and converting mathematical formulas to **LaTeX** ($\int f(x) dx$).
-    *   **Crop-Guided Strategy**: Extracts text/formula regions and sends high-res crops to LLMs for pixel-perfect recognition.
-*   **User System**: 
-    *   **Registration**: New users receive **10 free credits**.
-    *   **Credit System**: Pay-per-use model prevents resource abuse.
-*   **Multi-User Concurrency**: Built-in support for concurrent user sessions using a **Global Lock** mechanism for thread-safe GPU access and an **LRU Cache** (Least Recently Used) to persist image embeddings across requests, ensuring high performance and stability.
-*   **Web Interface**: A React-based frontend + FastAPI backend for easy uploading and editing.
-
-## Architecture Pipeline
-
-1.  **Input**: Image (PNG/JPG) or PDF.
-2.  **Segmentation (SAM3)**: Using our fine-tuned SAM3 mask decoder.
-4.  **Text Extraction (Parallel)**:
-    *   Azure OCR detects text bounding boxes.
-    *   High-res crops of text regions are sent to Mistral/LLM.
-    *   Latex conversion for formulas.
-5.  **XML/PPTX Generation**: Merging spatial data from our fine-tuned SAM3 and Text OCR.
-
-## Project Structure
-
-```
-sam3_workflow/
-├── config/                 # Configuration files
-├── flowchart_text/         # OCR & Text Extraction Module
-│   ├── src/                # OCR Source Code (Azure, Mistral, Alignment)
-│   └── main.py             # OCR Entry point
-├── frontend/               # React Web Application
-├── input/                  # [Manual] Input images directory
-├── models/                 # [Manual] Model weights (SAM3)
-├── output/                 # [Manual] Results directory
-├── sam3/                   # SAM3 Model Library
-├── scripts/                # Utility Scripts
-│   └── merge_xml.py        # XML Merging & Orchestration
-├── main.py                 # CLI Entry point (Modular Pipeline)
-├── server_pa.py            # FastAPI Backend Server (Service-based)
-└── requirements.txt        # Python dependencies
-```
-
-## Installation & Setup
-
-Follow these steps to set up the project locally.
-
-### 1. Prerequisites
-*   **Python 3.10+**
-*   **Node.js & npm** (for the frontend)
-*   **CUDA-capable GPU** (Highly recommended)
-
-### 2. Clone Repository
-```bash
-git clone https://github.com/BIT-DataLab/Edit-Banana.git
-cd Image2DrawIO
-```
-
-### 3. Initialize Directory Structure
-After cloning, you must **manually create** the following resource directories (ignored by Git):
+### 3. 本地网页入口
+运行 `python server_pa.py` 后，直接访问：
 
 ```bash
-# Create input/output directories
-mkdir -p input
-mkdir -p output
-mkdir -p sam3_output
+http://127.0.0.1:8000
 ```
 
-### 4. Download Model Weights
-Download the required models and place them in the correct paths:
+页面中点一次“开始转换”即可。
 
-| Model | Download | Target Path |
-| :--- | :--- | :--- |
-| **SAM 3** | https://modelscope.cn/models/facebook/sam3 | `models/sam3.pt` (or as configured) |
+### 4. OCR 可启用
+当前版本支持本地 Tesseract OCR。启用后可以识别图片中的文字，并写入最终结果与 TXT 文件。
 
-> **Note**: For SAM 3 (or the specific segmentation checkpoint used), place the `.pt` file in `models/` and update `config.yaml`.
+### 5. 本地 API 文档
+接口文档地址：
 
-### 5. Install Dependencies
+```bash
+http://127.0.0.1:8000/docs
+```
 
-**Backend:**
+---
+
+## 项目结构
+
+```text
+Edit-Banana/
+├── config/                  # 配置文件
+├── docs/                    # 说明文档
+├── flowchart_text/          # 文本处理相关模块
+├── input/                   # 运行时临时输入目录
+├── models/                  # 模型权重与相关资源
+├── modules/                 # 主流程模块
+├── output/                  # 输出目录
+├── prompts/                 # 提示词配置
+├── sam3/                    # 仓库自带 sam3 相关目录
+├── sam3_output/             # SAM3 中间结果
+├── sam3_service/            # SAM3 服务代码
+├── sam3_src/                # 单独克隆安装的官方 SAM3 源码
+├── scripts/                 # 工具脚本
+├── static/                  # 本地网页静态文件
+│   ├── banana.jpg
+│   ├── demo/
+│   └── index.html
+├── main.py                  # 主处理流程入口
+├── server_pa.py             # FastAPI 服务入口
+├── requirements.txt         # Python 依赖
+└── README.md
+```
+
+---
+
+## 环境要求
+
+建议环境：
+
+- Python 3.10 及以上
+- Windows 10/11 或 Linux
+- CUDA 可用显卡
+- Git
+- Conda 或 venv
+
+---
+
+## 安装步骤
+
+### 1. 克隆仓库
+
+```bash
+git clone https://github.com/Given-Dream/Edit-Banana.git
+cd Edit-Banana
+```
+
+### 2. 创建环境
+
+#### conda 方式
+```bash
+conda create -n edit-banana python=3.10 -y
+conda activate edit-banana
+```
+
+#### venv 方式
+```bash
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# Linux / macOS
+source .venv/bin/activate
+```
+
+### 3. 安装基础依赖
+
 ```bash
 pip install -r requirements.txt
 ```
 
-**Frontend:**
+---
+
+## SAM3 安装
+
+当前版本不能只放权重文件，还需要单独安装官方 SAM3 Python 包。
+
+### 1. 克隆官方 SAM3 源码
+注意目录名不要叫 `sam3`，避免与项目目录冲突。
+
 ```bash
-cd frontend
-npm install
+git clone https://github.com/facebookresearch/sam3.git sam3_src
+```
+
+### 2. 安装 SAM3
+进入源码目录后安装：
+
+```bash
+cd sam3_src
+pip install -e .
 cd ..
 ```
 
-### 6. Configuration
+### 3. 复制 BPE 文件
+将官方仓库中的 BPE 文件复制到 `models/` 目录：
 
-1.  **Config File**: Copy the example config.
-    ```bash
-    cp config/config.yaml.example config/config.yaml
-    ```
-2.  **Environment Variables**: Create a `.env` file in the root directory.
-    ```env
-    AZURE_ENDPOINT=your_azure_endpoint
-    AZURE_API_KEY=your_azure_key
-    # Add other keys as needed
-    ```
-
-## Usage
-
-### 1. Web Interface (Recommended)
-
-Start the Backend:
-```bash
-python server_pa.py
-# Server runs at http://localhost:8000
+#### Windows PowerShell
+```powershell
+Copy-Item .\sam3_src\assets\bpe_simple_vocab_16e6.txt.gz .\models\bpe_simple_vocab_16e6.txt.gz
 ```
 
-Start the Frontend:
+#### Git Bash
+```bash
+cp sam3_src/assets/bpe_simple_vocab_16e6.txt.gz models/bpe_simple_vocab_16e6.txt.gz
+```
+
+### 4. 放置模型权重
+将 SAM3 权重文件放到：
+
+```text
+models/sam3_ms/sam3.pt
+```
+
+如果目录不存在，请先手动创建：
+
+```bash
+mkdir -p models/sam3_ms
+```
+
+### 5. 检查导入
+安装成功后，可以执行：
+
+```bash
+python -c "from sam3.model_builder import build_sam3_image_model; print('OK')"
+```
+
+---
+
+## OCR 安装
+
+当前版本推荐使用 Tesseract。
+
+### 1. 安装 Tesseract
+Windows 可以安装到类似路径：
+
+```text
+D:\soft\Tesseract-OCR\tesseract.exe
+```
+
+### 2. 确认命令可用
+
+```bash
+tesseract --version
+```
+
+### 3. 安装 Python 包
+
+```bash
+pip install pytesseract
+```
+
+### 4. 中文识别
+如果需要中文识别，请确认 Tesseract 安装中包含：
+
+- `eng`
+- `chi_sim`
+
+可以执行检查：
+
+```bash
+tesseract --list-langs
+```
+
+---
+
+## 配置文件
+
+将示例配置复制为正式配置：
+
+#### Windows PowerShell
+```powershell
+Copy-Item .\config\config.yaml.example .\config\config.yaml
+```
+
+#### Git Bash
+```bash
+cp config/config.yaml.example config/config.yaml
+```
+
+重点确认 `config/config.yaml` 中这两项路径正确：
+
+```yaml
+sam3:
+  checkpoint_path: "models/sam3_ms/sam3.pt"
+  bpe_path: "models/bpe_simple_vocab_16e6.txt.gz"
+```
+
+---
+
+## 启动方式
+
+### 1. 启动网页服务
+
+```bash
+python server_pa.py
+```
+
+启动成功后访问：
+
+```bash
+http://127.0.0.1:8000
+```
+
+### 2. 打开接口文档
+
+```bash
+http://127.0.0.1:8000/docs
+```
+
+---
+
+## 使用方式
+
+### 网页方式
+1. 启动服务
+2. 浏览器打开 `http://127.0.0.1:8000`
+3. 选择一张图片
+4. 点击“开始转换”
+5. 等待处理完成
+6. 在页面中查看输出目录
+
+### 命令行方式
+也可以直接运行主流程：
+
+```bash
+python main.py -i input/test.png
+```
+
+---
+
+## 输出说明
+
+每次上传后，程序会在 `output/` 下生成一个结果文件夹，目录名为：
+
+```text
+原文件名_时间戳
+```
+
+如果原文件名包含不适合直接作为路径的字符，程序会自动转成安全名称。
+
+例如：
+
+```text
+output/
+└── flowchart_20260320_213015/
+    ├── flowchart_20260320_213015_with_text.drawio.xml
+    ├── flowchart_20260320_213015_no_text.drawio.xml
+    └── flowchart_20260320_213015_recognized_text.txt
+```
+
+文件说明：
+
+- `*_with_text.drawio.xml`
+  - 包含文字结果的可编辑 Draw.io 文件
+
+- `*_no_text.drawio.xml`
+  - 不包含文字结果的可编辑 Draw.io 文件
+
+- `*_recognized_text.txt`
+  - OCR 识别出的纯文本内容
+
+---
+
+## 当前网页行为
+
+当前版本的网页是轻量本地页面，位于：
+
+```text
+static/index.html
+```
+
+它不是 React 工程，不需要再执行：
+
 ```bash
 cd frontend
 npm install
 npm run dev
-# Frontend runs at http://localhost:5173
 ```
-Open your browser, upload an image, and view the result in the embedded DrawIO editor.
 
-### 2. Command Line Interface (CLI)
-
-To process a single image:
+只要运行：
 
 ```bash
-python main.py -i input/test_diagram.png
+python server_pa.py
 ```
-The output XML will be saved in the `output/` directory.
 
-## Configuration `config.yaml`
-
-Customize the pipeline behavior in `config/config.yaml`:
-*   **sam3**: Adjust score thresholds, NMS (Non-Maximum Suppression) thresholds, max iteration loops.
-*   **paths**: Set input/output directories.
-*   **dominant_color**: Fine-tune color extraction sensitivity.
-
-## 📌 Development Roadmap
-| Feature Module           | Status       | Description                     |
-|--------------------------|--------------|---------------------------------|
-| Core Conversion Pipeline | ✅ Completed | Full pipeline of segmentation, reconstruction and OCR |
-| Intelligent Arrow Connection | ⚠️ In Development | Automatically associate arrows with target shapes |
-| DrawIO Template Adaptation | 📍 Planned | Support custom template import |
-| Batch Export Optimization | 📍 Planned | Batch export to DrawIO files (.drawio) |
-| Local LLM Adaptation | 📍 Planned | Support local VLM deployment, independent of APIs |
-
-## 🤝 Contribution Guidelines
-Contributions of all kinds are welcome (code submissions, bug reports, feature suggestions):
-1.  Fork this repository
-2.  Create a feature branch (`git checkout -b feature/xxx`)
-3.  Commit your changes (`git commit -m 'feat: add xxx'`)
-4.  Push to the branch (`git push origin feature/xxx`)
-5.  Open a Pull Request
-
-Bug Reports: [Issues](https://github.com/XiangjianYi/Image2DrawIO/issues)
-Feature Suggestions: [Discussions](https://github.com/XiangjianYi/Image2DrawIO/discussions)
-
-
-
-## 🤩 Contributors
-Thanks to all developers who have contributed to the project and promoted its iteration!
-
-| Name/ID | Email |
-|---------|-------|
-| Chai Chengliang | ccl@bit.edu.cn |
-| Zhang Chi | zc315@bit.edu.cn |
-| Deng Qiyan |  |
-| Rao Sijing |  |
-| Yi Xiangjian |  |
-| Li Jianhui |  |
-| Shen Chaoyuan |  |
-| Zhang Junkai |  |
-| Han Junyi |  |
-| You Zirui |  |
-| Xu Haochen |  |
-| An Minghao |  |
-| Yu Mingjie |  |
-| Yu Xinjiang|  |
-| Chen Zhuofan|  |
-| Li Xiangkun|  |
-
-## 📄 License
-This project is open-source under the [Apache License 2.0](LICENSE), allowing commercial use and secondary development (with copyright notice retained).
+就可以直接访问网页入口。
 
 ---
-## 🌟 Star History
 
-🌟 If this project helps you, please star it to show your support!
+## 常见问题
 
-![Star History Chart](https://api.star-history.com/svg?repos=bit-datalab/edit-banana&type=date&legend=top-left)(https://www.star-history.com/#bit-datalab/edit-banana&type=date&legend=top-left)
+### 1. `/` 打开后只有 JSON，没有页面
+说明 `static/index.html` 没有正确返回，重点检查：
+
+- `static/index.html` 是否存在
+- `server_pa.py` 是否导入了 `FileResponse`
+- 根路由是否返回 `FileResponse(index_path)`
+
+### 2. `No module named 'sam3.model_builder'`
+说明官方 SAM3 包还没有正确安装。请重新执行：
+
+```bash
+cd sam3_src
+pip install -e .
+```
+
+### 3. `No such file or directory: models\bpe_simple_vocab_16e6.txt.gz`
+说明 BPE 文件没有复制到 `models/` 目录。
+
+### 4. `tesseract is not installed or it's not in your PATH`
+说明 Tesseract 尚未安装，或者系统环境变量没有生效。
+
+### 5. 图片路径乱码导致 OpenCV 读图失败
+当前版本已经对上传文件名做了安全处理。若仍报错，请尽量使用英文文件名测试。
+
+---
+
+## 建议加入 `.gitignore` 的内容
+
+```gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+.venv/
+venv/
+env/
+
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+input/
+output/
+sam3_output/
+*.log
+
+models/**/*.pt
+models/**/*.pth
+models/**/*.bin
+models/**/*.ckpt
+models/**/*.safetensors
+models/**/*.gz
+```
+
+---
+
+## 适用场景
+
+- 流程图转 Draw.io
+- 技术架构图重建
+- 示意图元素拆分与重构
+- 图形和文字分离后编辑
+- 生成带文字版与不带文字版两套结果
+
+---
+
+## 后续可扩展方向
+
+- 更稳的箭头连接恢复
+- 更高质量的公式识别
+- 批量图片处理
+- PDF 直接转换
+- 更完整的本地网页交互
+- 导出为更多格式
+
+---
+
+## 致谢
+
+本项目基于 Edit-Banana 进行本地整理与适配。  
+感谢原项目与相关依赖库提供的基础能力，包括但不限于：
+
+- SAM3
+- OpenCV
+- FastAPI
+- Tesseract
+- Draw.io 相关 XML 生成流程
+
+---
+
+## License
+
+本项目沿用原项目许可证，请以仓库中的 `LICENSE` 文件为准.
+
