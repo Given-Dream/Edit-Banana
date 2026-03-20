@@ -2,12 +2,21 @@
 # Python
 __pycache__/
 *.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
+input/
+output/
+sam3_output/
 .venv/
+venv/
+env/
+.idea/
+.vscode/
+*.log
+models/**/*.pt
+models/**/*.pth
+models/**/*.bin
+models/**/*.ckpt
+models/**/*.safetensors
+models/**/*.gz
 
 # Environment Variables
 .env

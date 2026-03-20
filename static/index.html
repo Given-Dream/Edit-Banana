@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edit Banana</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 0 16px;
+      line-height: 1.6;
+    }
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      padding: 24px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    input[type="file"] {
+      margin: 12px 0;
+    }
+    button {
+      padding: 10px 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    #status {
+      margin-top: 16px;
+      white-space: pre-wrap;
+    }
+    #result {
+      margin-top: 16px;
+      padding: 12px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      background: #fafafa;
+      display: none;
+    }
+    .path {
+      word-break: break-all;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Edit Banana 本地上传页</h2>
+    <input type="file" id="fileInput" accept="image/*" />
+    <br />
+    <button id="uploadBtn">开始转换</button>
+    <div id="status"></div>
+
+    <div id="result">
+      <div><strong>结果已保存</strong></div>
+      <div class="path" id="outputDir"></div>
+      <div class="path" id="withTextFile"></div>
+      <div class="path" id="noTextFile"></div>
+      <div class="path" id="txtFile"></div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById("fileInput");
+    const uploadBtn = document.getElementById("uploadBtn");
+    const statusBox = document.getElementById("status");
+    const resultBox = document.getElementById("result");
+    const outputDir = document.getElementById("outputDir");
+    const withTextFile = document.getElementById("withTextFile");
+    const noTextFile = document.getElementById("noTextFile");
+    const txtFile = document.getElementById("txtFile");
+
+    uploadBtn.addEventListener("click", async () => {
+      const file = fileInput.files[0];
+      if (!file) {
+        statusBox.textContent = "请先选择图片。";
+        return;
+      }
+
+      resultBox.style.display = "none";
+      outputDir.textContent = "";
+      withTextFile.textContent = "";
+      noTextFile.textContent = "";
+      txtFile.textContent = "";
+
+      statusBox.textContent = "正在转换，请稍等……\n结果会直接保存到 output 目录。";
+      uploadBtn.disabled = true;
+
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const response = await fetch("/convert", {
+          method: "POST",
+          body: formData
+        });
+
+        if (!response.ok) {
+          const errText = await response.text();
+          statusBox.textContent = "转换失败：\n" + errText;
+          return;
+        }
+
+        const data = await response.json();
+
+        statusBox.textContent = "转换完成。";
+
+        outputDir.textContent = data.output_dir
+          ? `结果文件夹：${data.output_dir}`
+          : "";
+
+        withTextFile.textContent = data.with_text_file
+          ? `带文字版：${data.with_text_file}`
+          : "";
+
+        noTextFile.textContent = data.no_text_file
+          ? `不带文字版：${data.no_text_file}`
+          : "";
+
+        txtFile.textContent = data.text_txt_file
+          ? `文字 TXT：${data.text_txt_file}`
+          : "";
+
+        resultBox.style.display = "block";
+      } catch (err) {
+        statusBox.textContent = "请求失败：\n" + err;
+      } finally {
+        uploadBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
